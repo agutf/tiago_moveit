@@ -1,6 +1,7 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
+from launch.substitutions import LaunchConfiguration
 from launch_pal.arg_utils import read_launch_argument
 from tiago_description.tiago_launch_utils import get_tiago_hw_suffix
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
@@ -23,7 +24,6 @@ class LaunchArguments(LaunchArgumentsBase):
     laser_model: DeclareLaunchArgument = TiagoArgs.laser_model
 
     use_sim_time: DeclareLaunchArgument = CommonArgs.use_sim_time
-    use_sensor_manager: DeclareLaunchArgument = CommonArgs.use_sensor_manager
 
 
 def generate_launch_description():
@@ -110,7 +110,7 @@ def start(context, *args, **kwargs):
         executable="move_tiago",
         output="screen",
         parameters=[
-            {'use_sim_time': True},
+            {'use_sim_time': LaunchConfiguration('use_sim_time')},
             moveit_config.robot_description,
             moveit_config.robot_description_semantic,
             moveit_config.robot_description_kinematics,
