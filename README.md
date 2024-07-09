@@ -1,6 +1,6 @@
 # tiago_moveit
 
-ROS 2 package for moving [Pal Robotics Tiago robot] (https://github.com/pal-robotics/tiago_robot) arm using MoveIt Motion Planning Framework.
+ROS 2 package for moving [Pal Robotics Tiago robot](https://github.com/pal-robotics/tiago_robot) arm using MoveIt Motion Planning Framework.
 
 ## Download tiago_simulation
 
