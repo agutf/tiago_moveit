@@ -1,4 +1,0 @@
-geometry_msgs/PoseStamped pose
-string frame
----
-geometry_msgs/PoseStamped pose
