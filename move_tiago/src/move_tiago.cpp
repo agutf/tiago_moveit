@@ -185,6 +185,9 @@ int main(int argc, char **argv) {
   auto move_group = new moveit::planning_interface::MoveGroupInterface(
       haptic_tiago_node, PLANNING_GROUP);
 
+  move_group->setMaxVelocityScalingFactor(1.0);
+  move_group->setMaxAccelerationScalingFactor(1.0);
+
   haptic_tiago_node->setMoveGroup(move_group);
 
   rclcpp::executors::MultiThreadedExecutor executor;
