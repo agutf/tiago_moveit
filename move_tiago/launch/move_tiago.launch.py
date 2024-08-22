@@ -109,6 +109,7 @@ def start(context, *args, **kwargs):
         package="move_tiago",
         executable="move_tiago",
         output="screen",
+        arguments=['--ros-args', '--log-level', "info"],
         parameters=[
             {'use_sim_time': LaunchConfiguration('use_sim_time')},
             moveit_config.robot_description,

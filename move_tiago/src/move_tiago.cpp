@@ -10,6 +10,7 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
 #include <mutex>
+#include <chrono>
 
 using std::placeholders::_1;
 
@@ -22,32 +23,107 @@ private:
 
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr subscription;
 
+  std::chrono::time_point<std::chrono::high_resolution_clock> last_processed_pose;
+
+  const double HAPTIC_X_MAX = 0.22;
+  const double HAPTIC_X_MIN = -0.22;
+
+  const double HAPTIC_Y_MAX = 0.12;
+  const double HAPTIC_Y_MIN = -0.09;
+
+  const double HAPTIC_Z_MAX = 0.2;
+  const double HAPTIC_Z_MIN = -0.1;
+
+  const double TIAGO_X_MAX = 0.5;
+  const double TIAGO_X_MIN = -0.5;
+
+  const double TIAGO_Y_MAX = 1.0;
+  const double TIAGO_Y_MIN = 0.75;
+
+  const double TIAGO_Z_MAX = 0.65;
+  const double TIAGO_Z_MIN = 0.55;
+
+  void printPose(geometry_msgs::msg::PoseStamped &pose) {
+    RCLCPP_INFO(LOGGER, "*****");
+    RCLCPP_INFO(LOGGER, "Position");
+    RCLCPP_INFO(LOGGER, "x: %f", pose.pose.position.x);
+    RCLCPP_INFO(LOGGER, "y: %f", pose.pose.position.y);
+    RCLCPP_INFO(LOGGER, "z: %f", pose.pose.position.z);
+    RCLCPP_INFO(LOGGER, "Orientation");
+    RCLCPP_INFO(LOGGER, "x: %f", pose.pose.orientation.x);
+    RCLCPP_INFO(LOGGER, "y: %f", pose.pose.orientation.y);
+    RCLCPP_INFO(LOGGER, "z: %f", pose.pose.orientation.z);
+    RCLCPP_INFO(LOGGER, "w: %f", pose.pose.orientation.w);
+    RCLCPP_INFO(LOGGER, "*****");
+  }
+
   void haptic_callback(const geometry_msgs::msg::PoseStamped &msg) {
+
+    // this->mutex.lock();
+    // geometry_msgs::msg::PoseStamped starting_pose = move_group->getCurrentPose();
+    // this->mutex.unlock();
+    // printPose(starting_pose);
+
+    // return;
+
+
+    // auto current_time = std::chrono::high_resolution_clock::now();
+
+    // if(!&last_processed_pose) {
+    //   last_processed_pose = current_time;
+    // }
+    
+    // auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - last_processed_pose).count();
+
+    // if(elapsed < 5000) {
+    //   return;
+    // }
+
+    // RCLCPP_INFO(LOGGER, "Mas de 5 segundos");
+
+    // last_processed_pose = current_time;
+
+    // if(!last_processed_pose && std::chrono::duration_cast<std::chrono::seconds>(current_time - *last_processed_pose).count() < 1) {
+    //   return;
+    // }
+
+    // RCLCPP_INFO(LOGGER, "Mas de 1 segundo");
+
+    // last_processed_pose = &current_time;
+
+    
+    RCLCPP_INFO(LOGGER, "Antes del stop");
+    move_group->stop();
+    RCLCPP_INFO(LOGGER, "Despues del stop");
+
     this->mutex.lock();
 
-    RCLCPP_INFO(LOGGER, "Haptic Callback");
+    double haptic_range_x = HAPTIC_X_MAX - HAPTIC_X_MIN;
+    double haptic_range_y = HAPTIC_Y_MAX - HAPTIC_Y_MIN;
+    double haptic_range_z = HAPTIC_Z_MAX - HAPTIC_Z_MIN;
+
+    double tiago_range_x = TIAGO_X_MAX - TIAGO_X_MIN;
+    double tiago_range_y = TIAGO_Y_MAX - TIAGO_Y_MIN;
+    double tiago_range_z = TIAGO_Z_MAX - TIAGO_Z_MIN;
+
+    // NewValue = (((OldValue - OldMin) * NewRange) / OldRange) + NewMin
 
     geometry_msgs::msg::PoseStamped randomPose = move_group->getRandomPose();
 
-    RCLCPP_INFO(LOGGER, "Despues del random pose");
+    randomPose.pose.orientation.x = -0.5;
+    randomPose.pose.orientation.y = 0.5;
+    randomPose.pose.orientation.z = 0.5;
+    randomPose.pose.orientation.w = 0.5;
+
+    randomPose.pose.position.y = (((msg.pose.position.x - HAPTIC_X_MIN) * tiago_range_x) / haptic_range_x) + TIAGO_X_MIN;
+    randomPose.pose.position.z = (((msg.pose.position.y - HAPTIC_Y_MIN) * tiago_range_y) / haptic_range_y) + TIAGO_Y_MIN;
+    randomPose.pose.position.x = (((msg.pose.position.z - HAPTIC_Z_MIN) * tiago_range_z) / haptic_range_z) + TIAGO_Z_MIN;
+
+    printPose(randomPose);
 
     move_group->setPoseTarget(randomPose);
 
-    RCLCPP_INFO(LOGGER, "Despues del setPoseTarget");
-
-    // Now, we call the planner to compute the plan and visualize it.
-    // Note that we are just planning, not asking move_group
-    // to actually move the robot.
-    moveit::planning_interface::MoveGroupInterface::Plan my_plan;
-
-    bool success =
-        (move_group->plan(my_plan) == moveit::core::MoveItErrorCode::SUCCESS);
-
-    RCLCPP_INFO(LOGGER, "Plan for haptic pose: %s", success ? "" : "FAILED");
-
-    if (success) {
-      move_group->move();
-    }
+    move_group->asyncMove();
 
     this->mutex.unlock();
   }
